@@ -1,6 +1,7 @@
 import numpy as np
 print("numpy version  : " + np.version.version)
 import matplotlib.pyplot as plot
+from json import JSONEncoder
 import cv2 as cv2
 print("opencv version : " + cv2.__version__ )
 import json
@@ -8,10 +9,22 @@ import argparse
 import os.path
 
 filename = "fotos/20210609_143107.JPG"
-outer_pixel_setpoint = 360   # from the setting of the laser : the outer XY
-W = [[-1, 1], [0, 1], [1,1], # wereld coordinaten in meters.
-        [-1, 0], [0, 0], [1,0], 
-        [-1, -1],[0, -1],[1,-1]]
+outer_pixel_setpoint     = 360   # from the setting of the laser : the outer XY
+no_laser_splots_per_line = 37
+world_coor = [[-1, 1], [0, 1], [1,1], # wereld coordinaten in meters.
+              [-1, 0], [0, 0], [1,0], 
+              [-1, -1],[0, -1],[1,-1]]
+
+corner_i_map = {"tl" : 0,
+                "tm" : 1,
+                "tr" : 2,
+                "ml" : 3,
+                "mm" : 4,
+                "mr" : 5,
+                "bl" : 6,
+                "bm" : 7,
+                "br" : 8 }
+laser_corners = []
 
 json_file_name = filename + ".json"
 img_org = cv2.imread(filename, cv2.IMREAD_COLOR)
@@ -21,10 +34,33 @@ scale = 0.25
 crop_select = False
 crop          = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
 laser_centers = []
+laser_centers_pix = []
+laser_centers_wor = []
 refer_marks   = []
 world_photo_fit_params = []
 DRAW_CIRCLE_RADIUS = 14
 DRAW_REF_RADIUS    = 14
+
+class NumpyArrayEncoder(JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return JSONEncoder.default(self, obj)
+
+# ===================================================
+# what do/should we do : map two coordinate systems
+#  laser_pixel ===> world_meters ===> photo_pixels
+#
+#  1st : manual create reference world coordinates (world --> photo pixels)
+#    fit the world meters to photo pixels 
+#  2nd : find the laser spots via image processing
+#    map those to laser pixel grid.
+#  3rd : convert laser-photo pixels --> world coordinates
+#
+#  4th : fit laser pixel grid towards world coordinates.
+
+
+
 
 # =====================================
 # load json file.
@@ -34,6 +70,7 @@ if (os.path.isfile(json_file_name)):
     json_data = json.loads(json_data)
     refer_marks = json_data["refer_marks"]
     laser_centers = json_data["laser_centers"]
+    laser_corners = json_data["laser_corners"]
 
 
 # =====================================
@@ -44,7 +81,8 @@ def saveJson():
         json_data = {}
         json_data["refer_marks"] = refer_marks
         json_data["laser_centers"] = laser_centers
-        json.dump(json_data, json_file, ensure_ascii=False, indent=4)
+        json_data["laser_corners"] = laser_corners
+        json.dump(json_data, json_file, ensure_ascii=False, indent=4, cls=NumpyArrayEncoder)
 
 
 
@@ -58,6 +96,20 @@ def image_show():
         cv2.putText(img, str(counter) ,(center[0]+4,center[1]+4),
                     cv2.FONT_HERSHEY_SIMPLEX, 1 , color=(0,0,55), thickness = 1)
         counter += 1
+    
+    counter = 0
+    for center in laser_centers_pix:
+        cv2.circle(img, (int(center[0]), int(center[1])), int(DRAW_CIRCLE_RADIUS+5), color=(0, 255, 255), thickness=2) # (B, G, R)
+        cv2.putText(img, str(counter) ,(center[0]+4,center[1]+4),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1 , color=(0,0,55), thickness = 1)
+        counter += 1
+
+    counter = 0
+    for c in laser_corners:
+        cv2.rectangle(img, (c[0]-DRAW_CIRCLE_RADIUS,c[1]-DRAW_CIRCLE_RADIUS),(c[0]+DRAW_CIRCLE_RADIUS,c[1]+DRAW_CIRCLE_RADIUS), color=(255,255,0), thickness = 2)
+        cv2.putText(img, str(counter) ,(c[0]+4,c[1]+4),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1 , color=(0,0,55), thickness = 1)
+        counter += 1
 
     counter = 0
     for r in refer_marks:
@@ -68,7 +120,7 @@ def image_show():
                     cv2.FONT_HERSHEY_SIMPLEX, 5 , color=(0,255,55), thickness = 2)
 
     if (world_photo_fit_params):
-        for w in W:
+        for w in world_coor:
             photo_coor = world_to_foto(w[0], w[1])
             cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS), color=(255, 0, 0), thickness=2) # (B, G, R)
 
@@ -80,7 +132,7 @@ def image_show():
 
 # =======================
 # IMAGE PROCESS THE LASERS
-def find_dots(image):
+def image_process_laser_dots(image):
     # https://stackoverflow.com/questions/51846933/finding-bright-spots-in-a-image-using-opencv#51848512
         #  constants
     BINARY_THRESHOLD = 100
@@ -116,10 +168,20 @@ def sort_references():
         return
     refer_marks.sort(key=x_value)
     refer_marks.sort(key=y_value)
-    
+
+# =============
+# helper function : closest point : return index
+def closest_node(point, points):
+    points = np.asarray(points)
+    dist_2 = np.sum((points - point)**2, axis=1)
+    return np.argmin(dist_2)
+
+
+
 # =============
 # map and sort the lasers
-def laser_sort():
+def det_laser_corners():
+    # find the corners
     x_plus_y = [c[0]+c[1] for c in laser_centers]
     x_min_y  = [c[0]-c[1] for c in laser_centers]
     
@@ -133,58 +195,125 @@ def laser_sort():
     max_value = max(x_min_y)
     max_index_x_min_y = x_min_y.index(max_value)
 
-    print("min_index_x_plus_y " + str(min_index_x_plus_y))
-    print("min_index_x_min_y " + str(min_index_x_min_y))
-    print("max_index_x_plus_y " + str(max_index_x_plus_y))
-    print("max_index_x_min_y " + str(max_index_x_min_y))
+    global laser_corners
+    laser_corners = np.zeros((9,2))
+    laser_corners[corner_i_map["tl"]] =  laser_centers[min_index_x_plus_y]
+    laser_corners[corner_i_map["tr"]] =  laser_centers[max_index_x_min_y]
+    laser_corners[corner_i_map["bl"]] =  laser_centers[min_index_x_min_y]
+    laser_corners[corner_i_map["br"]] =  laser_centers[max_index_x_plus_y]
 
-    laser_corners = {"top_left": laser_centers[min_index_x_plus_y],
-                    "bot_left": laser_centers[min_index_x_min_y],
-                    "bot_right": laser_centers[max_index_x_plus_y],
-                    "top_right": laser_centers[max_index_x_min_y]}
+    print (" laser_corners " + str(laser_corners))
     
+    laser_corners
+
+# ====================
+# Sort the laser corners
+def sort_laser_corners():
+    
+    if(len(laser_corners) != 9) :
+        print("cannot sort reference, only when 9")
+        return
+    laser_corners.sort(key=y_value)
+    for i in [0,1,2]:
+        laser_corners[i:i+3].sort(key=x_value)
+
+    return
+
+# =============
+# map and sort the lasers
+def laser_map():
+    # create the result arrays
+    global laser_centers_pix, laser_centers_wor
+    laser_centers_pix = []
+    laser_centers_wor = []
+    counter = 0
+
+    # create world coordinates line A, incl corners (exclude the last one.)
+    Awxs = np.linspace(-outer_pixel_setpoint, outer_pixel_setpoint, no_laser_splots_per_line).round().astype(int)
+    Awys = np.zeros(no_laser_splots_per_line)
+    Aws  = np.dstack((Awxs[:-1], Awys[:-1]))[0] # form 2d point array, exclude last corner (it will be part of next line);  [0]: remove 3rd dimension
+    # create laser estimates line A, incl corners
+    Les = np.linspace(laser_corners[corner_i_map["tl"]], laser_corners[corner_i_map["tr"]], no_laser_splots_per_line).round().astype(int)
+    # find the closest on line A 
+    for Le in Les:
+        close_le_i = closest_node(Le, laser_centers)
+        laser_centers_pix.append(laser_centers[close_le_i])
+    laser_centers_pix = Les
+    laser_centers_wor.append(Aws)
+
+    # debug
 
 
-    return laser_corners
+
+
+    return 
 
 # ===============
+# fit the world coordinates (wx,wy) on the foto pixels (px,py)
+# use least squares
+# | px | = | A B | . | wx | + | ox |
+# | py |   | C D |   | wy |   | oy |
+#
+#   P    =    M . w + O      
+#
+#   px = xMx.wx + xMy.wy + xMxy.wx*wy + ox
+#   py = yMx.wx + yMy.wy + yMxy.wx*wy + oy 
+#     etc
+#
+# | Px1 | = | 1 wx1 wy1  wx1*wy1  0   0   0     0    | . | ox   |
+# | Py1 |   | 0  0   0      0     1  wx1 wy1 wx1*wy1 |   | oy   |
+# | Px2 |   | 1 wx2 wy2  wx1*wy1  0   0   0     1    |   | xMx  |
+# | Py2 |   | 0  0   0      0     1  wx2 wy2 wx1*wy1 |   | xMy  |
+#   ...                                                  | xMxy |
+#   ...                                                  | yMx  |
+#   ...                                                  | yMy  |
+#   ...                                                  | yMxy |
+# etc
 def fit_world_photo():
     global world_photo_fit_params
 
-    M = np.zeros((18,6))
-    F = np.zeros((18,1))
+    M = np.zeros((18,8))
+    P = np.zeros((18,1))
     row_cnt = 0
-    for f,w in zip(refer_marks,W):
-        F[row_cnt]   = f[0]
-        F[row_cnt+1] = f[1]
+    for p,w in zip(refer_marks,world_coor):
+        P[row_cnt]   = p[0]
+        P[row_cnt+1] = p[1]
 
-        M[row_cnt,0] = w[0]
-        M[row_cnt,1] = w[1]
-        M[row_cnt,2] = 0
-        M[row_cnt,3] = 0
-        M[row_cnt,4] = 1
+        M[row_cnt,0] = 1
+        M[row_cnt,1] = w[0]
+        M[row_cnt,2] = w[1]
+        M[row_cnt,3] = w[0]*w[1]
+        M[row_cnt,4] = 0
         M[row_cnt,5] = 0
+        M[row_cnt,6] = 0
+        M[row_cnt,7] = 0
 
         M[row_cnt+1,0] = 0
         M[row_cnt+1,1] = 0
-        M[row_cnt+1,2] = w[0]
-        M[row_cnt+1,3] = w[1]
-        M[row_cnt+1,4] = 0
-        M[row_cnt+1,5] = 1
+        M[row_cnt+1,2] = 0
+        M[row_cnt+1,3] = 0
+        M[row_cnt+1,4] = 1
+        M[row_cnt+1,5] = w[0]
+        M[row_cnt+1,6] = w[1]
+        M[row_cnt+1,7] = w[0]*w[1]
 
         row_cnt += 2
 
-    A, B, C, D, Ox, Oy = np.linalg.lstsq(M, F, rcond=None)[0]
-    world_photo_fit_params=( *A, *B, *C, *D, *Ox, *Oy)
+    Ox, Oy, xMx, xMy, xMxy, yMx, yMy, yMxy  = np.linalg.lstsq(M, P, rcond=None)[0]
+    world_photo_fit_params=(*Ox, *Oy, *xMx, *xMy, *xMxy, *yMx, *yMy, *yMxy)
 
-    print(str(world_photo_fit_params))
+    return
 
+# ===============
+# calculate the world coordinates towards photo pixel coordinates
 def world_to_foto(x,y):
     wp = world_photo_fit_params
-    Fx = wp[0] * x + wp[1]*y + wp[4]
-    Fy = wp[2] * x + wp[3]*y + wp[5]
-    return (Fx,Fy)
+    Px = wp[0] +  wp[1]* x + wp[2]*y + wp[3]*x*y
+    Py = wp[4] +  wp[5]* x + wp[6]*y + wp[7]*x*y
+    return (Px,Py)
 
+# ===============
+# calculate the pixel coordinates towards world xy (screen) coordinates
 def foto_to_world(x,y):
     wp = world_photo_fit_params
     M = np.array([[wp[0], wp[1]],[wp[2], wp[3]]])
@@ -193,8 +322,6 @@ def foto_to_world(x,y):
     world = Mi * f_min_o.T
 
     return (world[0,0], world[1,0])
-
-
 
 # ===============
 # MOUSE HANDLING
@@ -214,7 +341,7 @@ def mouse_call(event, x, y, flags, param):
             if (crop[1][0] < 0) : 
                 crop[1][0] = 0
             r_mouse_down_last = [x,y]
-
+        return
     elif event == cv2.EVENT_LBUTTONDOWN:
         l_mouse_down = True
         print(" l mouse  " + str(x) + " " + str(y))
@@ -224,6 +351,18 @@ def mouse_call(event, x, y, flags, param):
             if (flags == cv2.EVENT_FLAG_CTRLKEY + cv2.EVENT_FLAG_LBUTTON) :
                 # REMOVE UNWANTED LASER OR REFERENCES
                 print("CNTRL")
+
+                cntr_cnt = 0
+                for center in laser_corners:
+                    # print(str(center) + str((x,y)))
+                    if ((abs(x - int(center[0])) < DRAW_CIRCLE_RADIUS) and 
+                        (abs(y - int(center[1])) < DRAW_CIRCLE_RADIUS)):
+                        print ("HIT laser_corners " + str(cntr_cnt))
+                        laser_corners.pop(cntr_cnt)
+                        break
+                    cntr_cnt += 1
+
+
                 cntr_cnt = 0
                 for center in laser_centers:
                     # print(str(center) + str((x,y)))
@@ -243,13 +382,18 @@ def mouse_call(event, x, y, flags, param):
                         refer_marks.pop(cntr_cnt)
                         break
                     cntr_cnt += 1
+
             else:
                 # ADD REFERENCE
                 if (len(refer_marks) < 9):
                     refer_marks.append((x,y))
                     sort_references()
+                elif (len(laser_corners) < 9):
+                    laser_corners.append((x,y))
+                    sort_laser_corners()
+                    print(str(laser_corners))
                 else:
-                    print("too many reference marks already, first remove some")
+                    print("too many reference marks or laser_corners already, first remove some")
 
 
     elif (event == cv2.EVENT_LBUTTONUP):
@@ -291,9 +435,10 @@ cv2.setMouseCallback(filename, mouse_call)
 print("press q to QUIT")
 print("      r to RESET VIEW")
 print("      l to LASER MODEL")
-print("      p to sort the refernces")
-print("      s to sort the lasers")
-print("      f to pixels to the world")
+print("      p to sort the references")
+print("      s to map the lasers to world coordinates")
+print("      f to fit reference : pixels to the world")
+print("      y to test couple of laser centers (87 and 11)")
 print("      CNTRL-LMB to REMOVE LASER and/or REFERENCE POINT (only scale 1")
 print("      RMB to DRAG VIEW")
 print("      LMB to SET MARKER")
@@ -310,12 +455,13 @@ while(run) :
         image_show()
     elif (key == ord("l")):
         print( "MODELING LASERS")
-        find_dots(img_org)
+        image_process_laser_dots(img_org)
     elif (key == ord("p")):
         sort_references()
         image_show()
     elif (key == ord("s")):
-        laser_sort()
+        det_laser_corners()
+        laser_map()
         image_show()
     elif (key == ord("f")):
         fit_world_photo()
