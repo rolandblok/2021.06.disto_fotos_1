@@ -8,9 +8,14 @@ import json
 import argparse
 import os.path
 
-filename = "fotos/20210609_143107.JPG"
-outer_pixel_setpoint     = 360   # from the setting of the laser : the outer XY
-no_laser_splots_per_line = 37
+# filename = "fotos/20210609_143107.JPG"
+# outer_pixel_setpoint     = 360   # from the setting of the laser : the outer XY
+# no_laser_splots_per_line = 37
+filename = "fotos_2/20210618_095352.JPG"
+outer_pixel_setpoint       = 400 - 50
+no_laser_splots_per_line   = 15
+
+
 world_coor = [[-1, 1], [0, 1], [1,1], # wereld coordinaten in meters.
               [-1, 0], [0, 0], [1,0], 
               [-1, -1],[0, -1],[1,-1]]
@@ -163,11 +168,16 @@ def image_process_laser_dots(image):
 def x_value(v) : return v[0]
 def y_value(v) : return v[1]
 def sort_references():
+    global refer_marks
     if(len(refer_marks) != 9) :
         print("cannot sort reference, only when 9")
         return
-    refer_marks.sort(key=x_value)
-    refer_marks.sort(key=y_value)
+    refer_marks = sorted(refer_marks, key=y_value)
+    for i in [0,1,2]:
+        print(str(i))
+        # refer_marks[3*i:(3*i)+3].sort(key=x_value)
+        refer_marks[3*i:(3*i)+3] = sorted(refer_marks[3*i:(3*i)+3], key=x_value)
+    
 
 # =============
 # helper function : closest point : return index
@@ -215,7 +225,7 @@ def sort_laser_corners():
         return
     laser_corners.sort(key=y_value)
     for i in [0,1,2]:
-        laser_corners[i:i+3].sort(key=x_value)
+        laser_corners[3*i:3*i+3].sort(key=x_value)
 
     return
 
@@ -344,7 +354,7 @@ def mouse_call(event, x, y, flags, param):
         return
     elif event == cv2.EVENT_LBUTTONDOWN:
         l_mouse_down = True
-        print(" l mouse  " + str(x) + " " + str(y))
+        # print(" l mouse  " + str(x) + " " + str(y))
         x += crop[0][0]
         y += crop[1][0]
         if (scale == 1):
@@ -398,19 +408,19 @@ def mouse_call(event, x, y, flags, param):
 
     elif (event == cv2.EVENT_LBUTTONUP):
         l_mouse_down = False
-        print(" l button " + str(x))
+        # print(" l button " + str(x))
 
     elif (event == cv2.EVENT_RBUTTONDOWN):
         r_mouse_down = True
         # crop_select = True
         r_mouse_down_last = [x,y]
-        print(" r mouse  " + str(x) + " " + str(y))
+        # print(" r mouse  " + str(x) + " " + str(y))
     elif (event == cv2.EVENT_RBUTTONUP):
         r_mouse_down = False
-        print(" r mouse  " + str(x) + " " + str(y))
+        # print(" r mouse  " + str(x) + " " + str(y))
         
     elif (event == cv2.EVENT_MOUSEWHEEL) :
-        print(" m wheel  " + str(x) + " " + str(y) + " " + str(flags) + " " + str(param))
+        # print(" m wheel  " + str(x) + " " + str(y) + " " + str(flags) + " " + str(param))
         if (flags > 0):
             scale = scale * 2 
             if scale > 1:
