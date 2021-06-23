@@ -1,5 +1,5 @@
 {
-    "refer_marks": [
+    "ref_pho_pix": [
         [
             1007,
             399
@@ -37,7 +37,7 @@
             2499
         ]
     ],
-    "laser_centers_pix": [
+    "laser_pho_pix": [
         [
             838,
             183

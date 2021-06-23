@@ -4,20 +4,20 @@ import numpy
 # ===============
 # fit the world coordinates (wx,wy) on the foto pixels (px,py)
 # use least squares
-# | px | = | A B | . | wx | + | ox |
-# | py |   | C D |   | wy |   | oy |
+# | px | = | ox | + | A B | . | wx | 
+# | py |   | oy | + | C D |   | wy |   
 #
-#   P    =    M . w + O      
+#   P    =  O  +  M . w
 #
-#   px = xMx.wx + xMy.wy + xMxy.wx*wy + ox
-#   py = yMx.wx + yMy.wy + yMxy.wx*wy + oy 
+#   px = ox + xMx.wx + xMy.wy + xMxy.wx*wy
+#   py = oy + yMx.wx + yMy.wy + yMxy.wx*wy 
 #     etc
 #
 # | Px1 | = | 1 wx1 wy1  wx1*wy1  0   0   0     0    | . | ox   |
-# | Py1 |   | 0  0   0      0     1  wx1 wy1 wx1*wy1 |   | oy   |
-# | Px2 |   | 1 wx2 wy2  wx1*wy1  0   0   0     1    |   | xMx  |
-# | Py2 |   | 0  0   0      0     1  wx2 wy2 wx1*wy1 |   | xMy  |
-#   ...                                                  | xMxy |
+# | Py1 |   | 0  0   0      0     1  wx1 wy1 wx1*wy1 |   | xMx  |
+# | Px2 |   | 1 wx2 wy2  wx1*wy1  0   0   0     1    |   | xMy  |
+# | Py2 |   | 0  0   0      0     1  wx2 wy2 wx1*wy1 |   | xMxy |
+#   ...                                                  | oy   |
 #   ...                                                  | yMx  |
 #   ...                                                  | yMy  |
 #   ...                                                  | yMxy |
