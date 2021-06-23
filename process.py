@@ -129,7 +129,15 @@ def image_show():
     if (world_photo_fit_params):
         for w in ref_wor_met:
             photo_coor = world_to_foto(w)
+            print ("linear fit " + str(w) + " --> " + str(photo_coor))
             cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS), color=(255, 0, 0), thickness=2) # (B, G, R)
+
+    if (world_photo_perspective_model):
+        for w in ref_wor_met:
+            photo_coor = world_photo_perspective_model.project_perspective(w[0], w[1])
+            print ("perspex fit " +  str(w) + " --> " + str(photo_coor))
+            cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS+2), color=(255, 255, 0), thickness=2) # (B, G, R)
+
 
         
     img = img[crop[1][0]:crop[1][1], crop[0][0]:crop[0][1]] #https://stackoverflow.com/questions/15589517/how-to-crop-an-image-in-opencv-using-python#15589825
@@ -510,10 +518,13 @@ while(run) :
         image_show()
 
     elif (key == ord("m")):
-        world_photo_perspective_model = PerspectiveModel()
+        if (world_photo_perspective_model == 0):
+            world_photo_perspective_model = PerspectiveModel()
         world_photo_perspective_model.fit(ref_wor_met, ref_pho_pix)
 
-        print(str(world_photo_fit_params))
+        print("world_photo_fit_params " + str(world_photo_fit_params))
+
+        image_show()
 
         
 saveJson()
