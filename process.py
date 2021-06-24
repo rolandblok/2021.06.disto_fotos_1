@@ -10,6 +10,7 @@ import os.path
 from math import *
 
 from perspective_model import *
+from twod_to_twod_perspective_transformation import TwoDToTwoDPerspectiveTransformation
 
 
 # ===================================================
@@ -69,6 +70,7 @@ ref_pho_pix   = []      # reference in photo pixels    : determined by click on 
 
 world_photo_fit_params = []
 world_photo_perspective_model = 0
+twod_perspective_model = TwoDToTwoDPerspectiveTransformation()
 
 scale = 0.25
 DRAW_CIRCLE_RADIUS = 14
@@ -137,6 +139,14 @@ def image_show():
             photo_coor = world_photo_perspective_model.project_perspective(w[0], w[1])
             print ("perspex fit " +  str(w) + " --> " + str(photo_coor))
             cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS+2), color=(255, 255, 0), thickness=2) # (B, G, R)
+    
+    if twod_perspective_model.is_calibrated:
+        for w in ref_wor_met:
+            photo_coor = twod_perspective_model.transform_input_to_output((w[0], w[1]))
+            print ("2D perspex fit " +  str(w) + " --> " + str(photo_coor))
+            cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS+2), color=(255, 255, 255), thickness=2) # (B, G, R)
+            wereld = twod_perspective_model.transform_output_to_input((photo_coor[0], photo_coor[1]))
+            print ("2D perspex fit inverse" +  str(photo_coor) + " --> " + str(wereld))
 
 
         
@@ -521,6 +531,12 @@ while(run) :
         if (world_photo_perspective_model == 0):
             world_photo_perspective_model = PerspectiveModel()
         world_photo_perspective_model.fit(ref_wor_met, ref_pho_pix)
+
+        if not twod_perspective_model.is_calibrated:
+            corners = [0, 2, 6, 8]
+            inputs = [ref_wor_met[i] for i in corners]
+            outputs = [ref_pho_pix[i] for i in corners]
+            twod_perspective_model.calibrate(inputs, outputs)
 
         print("world_photo_fit_params " + str(world_photo_fit_params))
 
