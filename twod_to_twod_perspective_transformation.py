@@ -14,8 +14,6 @@ class TwoDToTwoDPerspectiveTransformation:
         return self.__calibrated
 
     def calibrate(self, input_coordinates, output_coordinates):
-        print(f"{input_coordinates=}")
-        print(f"{output_coordinates=}")
         if (len(input_coordinates) != 4) or (len(output_coordinates) != 4):
             raise Exception("Need exactly four coordinate pairs to calibrate")
         self._calibrate(input_coordinates, output_coordinates)

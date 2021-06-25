@@ -9,8 +9,8 @@ import argparse
 import os.path
 from math import *
 
-from perspective_model import *
 from twod_to_twod_perspective_transformation import TwoDToTwoDPerspectiveTransformation
+from dist_transformation import DistTransformation
 
 
 # ===================================================
@@ -41,7 +41,7 @@ from twod_to_twod_perspective_transformation import TwoDToTwoDPerspectiveTransfo
 
 filename = "fotos_2/20210618_095410.JPG"
 laser_las_pix_coor_start         = 50
-laser_las_pix_coor_step          = 100
+laser_las_pix_coor_step          = 50
 laser_las_pix_coor_mid_pixel     = 400
 no_laser_spots_per_line          = 15
 
@@ -56,7 +56,6 @@ for y_i in range(0,no_laser_spots_per_line) :
     for x_i in range(0,no_laser_spots_per_line) :
         laser_las_pix.append([laser_las_pix_coor_start + x_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel, laser_las_pix_coor_start + y_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel])
 
-
 # ================
 # create the other globals
 json_file_name = filename + ".json"
@@ -65,12 +64,13 @@ img_height = img_org.shape[0]
 img_width  = img_org.shape[1]
 crop          = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
 laser_pho_pix = []      # laser spots in photo pixels  : determined by openCV
-laser_wor_met = []      # laser sports in world meters : determined by reference fit 
+
 ref_pho_pix   = []      # reference in photo pixels    : determined by click on photo
 
-world_photo_fit_params = []
-world_photo_perspective_model = 0
-twod_perspective_model = TwoDToTwoDPerspectiveTransformation()
+wor_to_pho_perspective_model = TwoDToTwoDPerspectiveTransformation()
+las_to_wor_perspective_model = TwoDToTwoDPerspectiveTransformation()
+disto_transform = DistTransformation()
+
 
 scale = 0.25
 DRAW_CIRCLE_RADIUS = 14
@@ -94,8 +94,6 @@ def loadJson():
         json_data = json.loads(json_data)
         ref_pho_pix = json_data["ref_pho_pix"]
         laser_pho_pix = json_data["laser_pho_pix"]
-        if (len(ref_pho_pix) == 9):
-            fit_world_photo()
 
 
 # =====================================
@@ -128,25 +126,11 @@ def image_show():
         cv2.putText(img, str(counter) ,(r[0]+4,r[1]+4),
                     cv2.FONT_HERSHEY_SIMPLEX, 5 , color=(0,255,55), thickness = 2)
 
-    if (world_photo_fit_params):
-        for w in ref_wor_met:
-            photo_coor = world_to_foto(w)
-            print ("linear fit " + str(w) + " --> " + str(photo_coor))
-            cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS), color=(255, 0, 0), thickness=2) # (B, G, R)
-
-    if (world_photo_perspective_model):
-        for w in ref_wor_met:
-            photo_coor = world_photo_perspective_model.project_perspective(w[0], w[1])
-            print ("perspex fit " +  str(w) + " --> " + str(photo_coor))
-            cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS+2), color=(255, 255, 0), thickness=2) # (B, G, R)
-    
-    if twod_perspective_model.is_calibrated:
-        for w in ref_wor_met:
-            photo_coor = twod_perspective_model.transform_input_to_output((w[0], w[1]))
-            print ("2D perspex fit " +  str(w) + " --> " + str(photo_coor))
-            cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS+2), color=(255, 255, 255), thickness=2) # (B, G, R)
-            wereld = twod_perspective_model.transform_output_to_input((photo_coor[0], photo_coor[1]))
-            print ("2D perspex fit inverse" +  str(photo_coor) + " --> " + str(wereld))
+    if wor_to_pho_perspective_model.is_calibrated:
+        for w,p in zip(ref_wor_met, ref_pho_pix):
+            photo_coor = wor_to_pho_perspective_model.transform_input_to_output((w[0], w[1]))
+            cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS+4), color=(255, 255, 255), thickness=2) # (B, G, R)
+            wereld = wor_to_pho_perspective_model.transform_output_to_input((p[0], p[1]))
 
 
         
@@ -181,6 +165,8 @@ def image_process_laser_dots(image):
     for component in components3:
         # transform to serializable data
         laser_pho_pix.append((int(component[0]), int(component[1])))
+
+    laser_map_and_sort()
     image_show()
 
 # =============
@@ -194,7 +180,6 @@ def sort_references():
         return
     ref_pho_pix = sorted(ref_pho_pix, key=y_value)
     for i in [0,1,2]:
-        print(str(i))
         # ref_pho_pix[3*i:(3*i)+3].sort(key=x_value)
         ref_pho_pix[3*i:(3*i)+3] = sorted(ref_pho_pix[3*i:(3*i)+3], key=x_value)
     fit_world_photo()
@@ -230,7 +215,7 @@ def det_matrix_corners(M):
     corners_i[0][1] =  min_index_x_min_y   # bot left
     corners_i[1][1] =  max_index_x_plus_y  # bot right
     
-    return corners, corners_i
+    return corners, corners_i.astype(np.int32)
 
 # =============
 # helper : closest point : return index and distance
@@ -245,19 +230,10 @@ def closest_node(point, points):
 def isabove(p, a,b): 
     return (np.cross(p-a, b-a) > 0) # https://stackoverflow.com/questions/45766534/finding-cross-product-to-find-points-above-below-a-line-in-matplotlib
 
-# =============
-# convert lasers photo pixels towards laser world meters (remove photo perspective)
-def laser_pho_pix_2_laser_wor_met():
-    global laser_wor_met
-    laser_wor_met = []
-    for lpp in laser_pho_pix:
-        lwm = foto_to_world (lpp)
-        laser_wor_met.append(lwm)
-    return
 
 # =============
-# map and sort the lasers
-def laser_map():
+# map the lasers to the set setoints, and sort them
+def laser_map_and_sort():
     global laser_pho_pix
 
     no_expected_laser_spots = no_laser_spots_per_line * no_laser_spots_per_line
@@ -306,85 +282,80 @@ def laser_map():
 
     return 
 
-# ===============
-# fit the world coordinates (wx,wy) on the foto pixels (px,py)
-# use least squares
-# | px | = | ox | + | A B | . | wx | 
-# | py |   | oy | + | C D |   | wy |   
-#
-#   P    =  O  +  M . w
-#
-#   px = ox + xMx.wx + xMy.wy + xMxy.wx*wy
-#   py = oy + yMx.wx + yMy.wy + yMxy.wx*wy 
-#     etc
-#
-# | Px1 | = | 1 wx1 wy1  wx1*wy1  0   0   0     0    | . | ox   |
-# | Py1 |   | 0  0   0      0     1  wx1 wy1 wx1*wy1 |   | xMx  |
-# | Px2 |   | 1 wx2 wy2  wx1*wy1  0   0   0     1    |   | xMy  |
-# | Py2 |   | 0  0   0      0     1  wx2 wy2 wx1*wy1 |   | xMxy |
-#   ...                                                  | oy   |
-#   ...                                                  | yMx  |
-#   ...                                                  | yMy  |
-#   ...                                                  | yMxy |
-# etc
-def fit_world_photo():
-    global world_photo_fit_params
+# ============================
+# model one by one all projections.
+def model_projections(plot_on=True):
+    # ..............
+    # project reference to photo pixels : pespective removal possible
+    if not wor_to_pho_perspective_model.is_calibrated:
+        corners = [0, 2, 6, 8]
+        inputs = [ref_wor_met[i] for i in corners]
+        outputs = [ref_pho_pix[i] for i in corners]
+        wor_to_pho_perspective_model.calibrate(inputs, outputs)
+        # TODO : residuals of fit
+        # print ("2D perspex fit inverse" +  str(wereld[0]-w[0]) + " --> " + str(wereld[1]-w[1]))
 
-    M = np.zeros((18,8))
-    P = np.zeros((18,1))
-    row_cnt = 0
-    for p,w in zip(ref_pho_pix,ref_wor_met):
-        P[row_cnt]   = p[0]
-        P[row_cnt+1] = p[1]
+    laser_wor_met       = []      # laser sports in world meters : determined by reference fit         global laser_sp_perp_free
+    laser_sp_perp_free  = []      # laser spot from photo to laser setpoints : remove photo and laser perspective
 
-        M[row_cnt,0] = 1
-        M[row_cnt,1] = w[0]
-        M[row_cnt,2] = w[1]
-        M[row_cnt,3] = w[0]*w[1]
-        M[row_cnt,4] = 0
-        M[row_cnt,5] = 0
-        M[row_cnt,6] = 0
-        M[row_cnt,7] = 0
+    # ..............
+    # use corners of lasers to determine laser perspective
+    if not las_to_wor_perspective_model.is_calibrated:
+        # determine laser corners
+        laser_corners_pho_pix, laser_corners_pho_pix_i = det_matrix_corners(laser_pho_pix)
+        laser_corners_pho_pix_i = laser_corners_pho_pix_i.flatten()
+        # remove photo perspective from corners laser-photo-pixels
+        laser_corners_wor_met = [wor_to_pho_perspective_model.transform_output_to_input(laser_pho_pix[i]) for i in laser_corners_pho_pix_i]
+        laser_corners_las_pix = [laser_las_pix[i] for i in laser_corners_pho_pix_i]
+        # fit the laser perspective on the corners
+        las_to_wor_perspective_model.calibrate(laser_corners_las_pix, laser_corners_wor_met)
 
-        M[row_cnt+1,0] = 0
-        M[row_cnt+1,1] = 0
-        M[row_cnt+1,2] = 0
-        M[row_cnt+1,3] = 0
-        M[row_cnt+1,4] = 1
-        M[row_cnt+1,5] = w[0]
-        M[row_cnt+1,6] = w[1]
-        M[row_cnt+1,7] = w[0]*w[1]
+        # remove photo and laser perspective 
+        for lpp in laser_pho_pix:
+            # remove photo perspective (for plot only)
+            lwm = wor_to_pho_perspective_model.transform_output_to_input(lpp)
+            laser_wor_met.append(lwm)
 
-        row_cnt += 2
+            # remove laser perspective also
+            lsp_d = las_to_wor_perspective_model.transform_output_to_input(lwm)
+            laser_sp_perp_free.append(lsp_d)
 
-    Ox, xMx, xMy, xMxy, Oy, yMx, yMy, yMxy  = np.linalg.lstsq(M, P, rcond=None)[0]
-    world_photo_fit_params=(*Ox, *xMx, *xMy, *xMxy, *Oy, *yMx, *yMy, *yMxy)
+        # plot the laser spots with both perspectives removed.
+        if (plot_on):
+            fig1 = plot.figure()
+            x = [c[0] for c in laser_wor_met]
+            y = [c[1] for c in laser_wor_met]
+            plot.plot(x,y,'.')
+            plot.title("laser spots with photo perspective removed")
 
-    return
+            fig2 = plot.figure()
+            x = [c[0] for c in laser_sp_perp_free]
+            y = [c[1] for c in laser_sp_perp_free]
+            plot.plot(x,y,'.')
+            plot.title("laser spots with both photo and laser perspective removed")
 
-# ===============
-# calculate the world coordinates towards photo pixel coordinates
-def world_to_foto(point_wor_met):
-    x = point_wor_met[0]
-    y = point_wor_met[1]
-    wp = world_photo_fit_params
-    Px = wp[0] +  wp[1]* x + wp[2]*y + wp[3]*x*y
-    Py = wp[4] +  wp[5]* x + wp[6]*y + wp[7]*x*y
-    return (Px,Py)
 
-# ===============
-# calculate the pixel coordinates towards world xy (screen) coordinates
-def foto_to_world(point_pho_pix):
-    x = point_pho_pix[0]
-    y = point_pho_pix[1]
+    laser_sp_persp_n_disto_free  = []      # laser spot photo to setpoints : removed photo persp, laser persp, laser disto.
 
-    wp = world_photo_fit_params
-    M = np.array([[wp[1], wp[2], wp[3]],[wp[5], wp[6], wp[7]]])
-    Mi = np.linalg.pinv(M)
-    f_min_o = np.matrix([x - wp[0], y - wp[4]])
-    world = Mi * f_min_o.T
+    if not disto_transform.is_calibrated :
 
-    return (world[0,0], world[1,0])
+        disto_transform.calibrate(laser_las_pix , laser_sp_perp_free)
+
+        laser_sp_persp_n_disto_free = [disto_transform.remove_disto(l) for l in laser_sp_perp_free]
+        
+        if (plot_on):
+            fig3 = plot.figure()
+            x = [c[0] for c in laser_sp_persp_n_disto_free]
+            y = [c[1] for c in laser_sp_persp_n_disto_free]
+            plot.plot(x,y, '.')
+            plot.title("laser spots with all removed removed")
+
+    if plot_on:
+        plot.ion()
+        plot.show()
+        image_show()
+
+
 
 # ===============
 # MOUSE HANDLING
@@ -421,6 +392,7 @@ def mouse_call(event, x, y, flags, param):
                         (abs(y - int(center[1])) < DRAW_CIRCLE_RADIUS)):
                         print ("HIT laser " + str(cntr_cnt))
                         laser_pho_pix.pop(cntr_cnt)
+                        laser_map_and_sort()
                         break
                     cntr_cnt += 1
 
@@ -440,8 +412,10 @@ def mouse_call(event, x, y, flags, param):
                     ref_pho_pix.append((x,y))
                     sort_references()
                 else :
+                    print("laser spots adding DISABLED")
                     # laser_centers.append((x,y))
-                    print("too many reference marks already, first remove some")
+                    # laser_map_and_sort
+                    print("too many reference marks already, first remove some ")
 
 
     elif (event == cv2.EVENT_LBUTTONUP):
@@ -482,19 +456,16 @@ cv2.setMouseCallback(filename, mouse_call)
 
 print("press q to QUIT")
 print("      r to RESET VIEW")
-print("      l to LASER MODEL")
+print("      l to LASER spot image process")
 print("      c to clear Laser MODEL")
-print("      p to sort the references and fit photo-world correction model")
-print("      s to sort and map the lasers to world coordinates")
-print("      k to map laser to meters and show")
 print("      m to perspective fit the reference photo-world correction model")
-print("      CNTRL-LMB to REMOVE LASER and/or REFERENCE POINT (only scale 1")
 print("      RMB to DRAG VIEW")
-print("      LMB to SET MARKER")
+print("      LMB to SET MARKER and/or laser spot")
+print("      CNTRL-LMB to REMOVE LASER and/or REFERENCE POINT (only @scale 1")
 
 run = True
 while(run) :
-    plot.pause(0.001)
+    plot.pause(0.01)
 
     key = cv2.waitKey(30)
     if (key == ord("q")) : 
@@ -511,34 +482,11 @@ while(run) :
         print( "CLEAR LASERS")
         laser_center_pix = []
         image_show()
-    elif (key == ord("p")):
-        sort_references()
-        image_show()
     elif (key == ord("s")):
-        laser_map()
+        laser_map_and_sort()
         image_show()
-    elif (key == ord("k")):
-        laser_pho_pix_2_laser_wor_met()
-        fig1 = plot.figure()
-        x = [c[0] for c in laser_wor_met]
-        y = [c[1] for c in laser_wor_met]
-        plot.plot(x,y,'.')
-        plot.ion()
-        plot.show()
-        image_show()
-
     elif (key == ord("m")):
-        if (world_photo_perspective_model == 0):
-            world_photo_perspective_model = PerspectiveModel()
-        world_photo_perspective_model.fit(ref_wor_met, ref_pho_pix)
-
-        if not twod_perspective_model.is_calibrated:
-            corners = [0, 2, 6, 8]
-            inputs = [ref_wor_met[i] for i in corners]
-            outputs = [ref_pho_pix[i] for i in corners]
-            twod_perspective_model.calibrate(inputs, outputs)
-
-        print("world_photo_fit_params " + str(world_photo_fit_params))
+        model_projections()
 
         image_show()
 

@@ -2,6 +2,12 @@ import numpy as np
 import math as math
 import scipy.optimize
 
+# ==================================================================================
+# model the perspective using end order scipy curve fit model
+# obsolete : doesn't work very stable, replaced by absolute projection without fit.
+# ==================================================================================
+
+
 class ModelParams:
     def __init__(self):
         self.PARAMETER_LIST = ["mxx", "myx", "mzx", "mxy", "myy", "mzy", "mxz", "myz", "mzz", "tx", "ty", "tz"]
