@@ -27,11 +27,11 @@ from dist_transformation import DistTransformation
 
 
 
-filename = "fotos_2/20210618_095352.JPG"
-laser_las_pix_coor_start       = 50
-laser_las_pix_coor_step        = 50
-laser_las_pix_coor_mid_pixel   = 400
-no_laser_spots_per_line        = 15
+# filename = "fotos_2/20210618_095352.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 50
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 15
 
 # filename = "fotos_2/20210618_095410.JPG"
 # laser_las_pix_coor_start         = 50
@@ -51,11 +51,53 @@ no_laser_spots_per_line        = 15
 # laser_las_pix_coor_mid_pixel   = 400
 # no_laser_spots_per_line        = 15
 
+# filename = "fotos_2/20210618_095609.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 50
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 15
+
+# filename = "fotos_2/20210618_095618.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 50
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 15
+
+# filename = "fotos_2/20210618_100631.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 50
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 15
+
+# filename = "fotos_2/20210618_100642.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 50
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 15
+
 # filename = "fotos_2/20210618_101129.JPG"
 # laser_las_pix_coor_start         = 50
 # laser_las_pix_coor_step          = 100
 # laser_las_pix_coor_mid_pixel     = 400
 # no_laser_spots_per_line          = 8
+
+# filename = "fotos_2/20210618_101220.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 100
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 8
+
+# filename = "fotos_2/20210618_101230.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 100
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 8
+
+filename = "fotos_2/20210618_101335.JPG"
+laser_las_pix_coor_start       = 50
+laser_las_pix_coor_step        = 100
+laser_las_pix_coor_mid_pixel   = 400
+no_laser_spots_per_line        = 8
 
 
 # =====================
@@ -259,11 +301,15 @@ def isabove(p, a,b):
 def laser_map_and_sort():
     global laser_pho_pix
 
+    if(len(ref_pho_pix) != 9) :
+        print("cannot sort reference, only when 9")
+        return
     no_expected_laser_spots = no_laser_spots_per_line * no_laser_spots_per_line
     if (no_expected_laser_spots != len(laser_pho_pix)):
         print("Warning : no expected laser spots not equal to no laser spots")
         print(" expected " + str(no_expected_laser_spots))
         print(" actual   " + str(len(laser_pho_pix)))
+        return
 
     # create the result arrayss
     laser_pho_pix_work = laser_pho_pix.copy()
