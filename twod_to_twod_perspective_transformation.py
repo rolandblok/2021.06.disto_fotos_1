@@ -50,7 +50,7 @@ class TwoDToTwoDPerspectiveTransformation:
                          [coordinates[0][1], coordinates[1][1], coordinates[2][1]],
                          [1.0, 1.0, 1.0]])
         v = numpy.array([[coordinates[3][0]], [coordinates[3][1]], [1.0]])
-        all_outs = numpy.linalg.lstsq(m, v, rcond="warn")
+        all_outs = numpy.linalg.lstsq(m, v, rcond=None)
         x = all_outs[0]
         return m * x.T
 

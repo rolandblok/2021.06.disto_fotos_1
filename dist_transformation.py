@@ -11,6 +11,8 @@ class DistTransformation:
         #  Y = b * tan(s*las_sp_y - a)
         #  X = (d/cos(s*las_sp_y) + e) * tan(t*las_sp_x - c)
 
+        self.params_str = " a, b, c, d, e, s, t"
+        self.params     = []
         self.s = math.pi / (8*400) # guestimate , rad/pixel
         self.t = math.pi / (8*400) # guestimate , rad/pixel
         self.d = 2    # guestimate , pixel 
@@ -71,5 +73,11 @@ class DistTransformation:
         laser_setpoints = numpy.vstack(laser_setpoints)
         distorted_laser_setpoints = numpy.vstack(distorted_laser_setpoints).flatten()
         p, cov = scipy.optimize.curve_fit(self._add_disto, laser_setpoints, distorted_laser_setpoints, [self.a,self.b,self.c,self.d,self.e,self.s,self.t])
-        print(p)
+        print(" Y = b * tan(s*las_sp_y - a) " )
+        print(" X = (d/cos(s*las_sp_y) + e) * tan(t*las_sp_x - c)")
+
         self.a,self.b,self.c,self.d,self.e,self.s,self.t = p
+        self.params = p
+        
+        print( str(self.a) + ", "+ str(self.b) + ", "+ str(self.c) + ", "+ str(self.d) + ", "+ str(self.e) + ", "+ str(self.s) + ", "+ str(self.t))
+

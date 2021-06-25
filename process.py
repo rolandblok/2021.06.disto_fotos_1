@@ -33,17 +33,17 @@ from dist_transformation import DistTransformation
 # laser_las_pix_coor_mid_pixel   = 400
 # no_laser_spots_per_line        = 15
 
-# filename = "fotos_2/20210618_101129.JPG"
-# laser_las_pix_coor_start         = 50
-# laser_las_pix_coor_step          = 100
-# laser_las_pix_coor_mid_pixel     = 400
-# no_laser_spots_per_line          = 8
-
-filename = "fotos_2/20210618_095410.JPG"
+filename = "fotos_2/20210618_101129.JPG"
 laser_las_pix_coor_start         = 50
-laser_las_pix_coor_step          = 50
+laser_las_pix_coor_step          = 100
 laser_las_pix_coor_mid_pixel     = 400
-no_laser_spots_per_line          = 15
+no_laser_spots_per_line          = 8
+
+# filename = "fotos_2/20210618_095410.JPG"
+# laser_las_pix_coor_start         = 50
+# laser_las_pix_coor_step          = 50
+# laser_las_pix_coor_mid_pixel     = 400
+# no_laser_spots_per_line          = 15
 
 
 # =====================
@@ -64,7 +64,6 @@ img_height = img_org.shape[0]
 img_width  = img_org.shape[1]
 crop          = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
 laser_pho_pix = []      # laser spots in photo pixels  : determined by openCV
-
 ref_pho_pix   = []      # reference in photo pixels    : determined by click on photo
 
 wor_to_pho_perspective_model = TwoDToTwoDPerspectiveTransformation()
@@ -105,6 +104,13 @@ def saveJson():
         json_data["laser_pho_pix"] = laser_pho_pix
         json.dump(json_data, json_file, ensure_ascii=False, indent=4, cls=NumpyArrayEncoder)
 
+    if disto_transform.is_calibrated :
+        disto_model_file_name = "disto_model_params.txt"
+        with open(os.getcwd()+disto_model_file_name+".txt", 'a', encoding='utf-8') as data_file:
+
+            for param in disto_transform.params :
+                data_file.write(str(param) + ', ')
+            data_file.write('\n ')
 
 
 # =====================================
