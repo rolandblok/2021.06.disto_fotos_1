@@ -48,7 +48,8 @@ class DistTransformation:
     def add_disto(self, input_coordinate ):
         if not self.__calibrated:
             raise Exception("Transformation needs to be calibrated first")
-        self._add_disto_x(input_coordinate[0], input_coordinate[1], self.a,self.b,self.c,self.d,self.e,self.s,self.t)
+        return self._add_disto([input_coordinate], self.a,self.b,self.c,self.d,self.e,self.s,self.t)
+
         
 
     def _add_disto_x(self, las_sp_x, las_sp_y, a,b,c,d,e,s,t):

@@ -27,23 +27,35 @@ from dist_transformation import DistTransformation
 
 
 
-# filename = "fotos_2/20210618_095352.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
-
-filename = "fotos_2/20210618_101129.JPG"
-laser_las_pix_coor_start         = 50
-laser_las_pix_coor_step          = 100
-laser_las_pix_coor_mid_pixel     = 400
-no_laser_spots_per_line          = 8
+filename = "fotos_2/20210618_095352.JPG"
+laser_las_pix_coor_start       = 50
+laser_las_pix_coor_step        = 50
+laser_las_pix_coor_mid_pixel   = 400
+no_laser_spots_per_line        = 15
 
 # filename = "fotos_2/20210618_095410.JPG"
 # laser_las_pix_coor_start         = 50
 # laser_las_pix_coor_step          = 50
 # laser_las_pix_coor_mid_pixel     = 400
 # no_laser_spots_per_line          = 15
+
+# filename = "fotos_2/20210618_095516.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 50
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 15
+
+# filename = "fotos_2/20210618_095534.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 50
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 15
+
+# filename = "fotos_2/20210618_101129.JPG"
+# laser_las_pix_coor_start         = 50
+# laser_las_pix_coor_step          = 100
+# laser_las_pix_coor_mid_pixel     = 400
+# no_laser_spots_per_line          = 8
 
 
 # =====================
@@ -65,10 +77,11 @@ img_width  = img_org.shape[1]
 crop          = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
 laser_pho_pix = []      # laser spots in photo pixels  : determined by openCV
 ref_pho_pix   = []      # reference in photo pixels    : determined by click on photo
+laser_pho_pix_from_reference = []      # laser spots in photo pixels  : determined by openCV
 
 wor_to_pho_perspective_model = TwoDToTwoDPerspectiveTransformation()
 las_to_wor_perspective_model = TwoDToTwoDPerspectiveTransformation()
-disto_transform = DistTransformation()
+disto_transform_model        = DistTransformation()
 
 
 scale = 0.25
@@ -104,11 +117,11 @@ def saveJson():
         json_data["laser_pho_pix"] = laser_pho_pix
         json.dump(json_data, json_file, ensure_ascii=False, indent=4, cls=NumpyArrayEncoder)
 
-    if disto_transform.is_calibrated :
+    if disto_transform_model.is_calibrated :
         disto_model_file_name = "disto_model_params.txt"
         with open(os.getcwd()+disto_model_file_name+".txt", 'a', encoding='utf-8') as data_file:
 
-            for param in disto_transform.params :
+            for param in disto_transform_model.params :
                 data_file.write(str(param) + ', ')
             data_file.write('\n ')
 
@@ -138,6 +151,11 @@ def image_show():
             cv2.circle(img, (int(photo_coor[0]), int(photo_coor[1])), int(DRAW_CIRCLE_RADIUS+4), color=(255, 255, 255), thickness=2) # (B, G, R)
             wereld = wor_to_pho_perspective_model.transform_output_to_input((p[0], p[1]))
 
+    counter = 0
+    for center in laser_pho_pix_from_reference:
+        cv2.circle(img, (int(center[0]), int(center[1])), int(DRAW_CIRCLE_RADIUS+4), color=(255, 0, 255), thickness=2) # (B, G, R)
+        counter += 1
+    
 
         
     img = img[crop[1][0]:crop[1][1], crop[0][0]:crop[0][1]] #https://stackoverflow.com/questions/15589517/how-to-crop-an-image-in-opencv-using-python#15589825
@@ -188,7 +206,6 @@ def sort_references():
     for i in [0,1,2]:
         # ref_pho_pix[3*i:(3*i)+3].sort(key=x_value)
         ref_pho_pix[3*i:(3*i)+3] = sorted(ref_pho_pix[3*i:(3*i)+3], key=x_value)
-    fit_world_photo()
 
 
 
@@ -291,6 +308,13 @@ def laser_map_and_sort():
 # ============================
 # model one by one all projections.
 def model_projections(plot_on=True):
+    no_expected_laser_spots = no_laser_spots_per_line * no_laser_spots_per_line
+    if (no_expected_laser_spots != len(laser_pho_pix)):
+        print("Warning : no expected laser spots not equal to no laser spots")
+        print(" expected " + str(no_expected_laser_spots))
+        print(" actual   " + str(len(laser_pho_pix)))
+        return
+
     # ..............
     # project reference to photo pixels : pespective removal possible
     if not wor_to_pho_perspective_model.is_calibrated:
@@ -337,29 +361,38 @@ def model_projections(plot_on=True):
             fig2 = plot.figure()
             x = [c[0] for c in laser_sp_perp_free]
             y = [c[1] for c in laser_sp_perp_free]
-            plot.plot(x,y,'.')
+            plot.plot(x,y,'x')
             plot.title("laser spots with both photo and laser perspective removed")
 
 
+    # calibrate the distortion of the laser
     laser_sp_persp_n_disto_free  = []      # laser spot photo to setpoints : removed photo persp, laser persp, laser disto.
+    if not disto_transform_model.is_calibrated :
 
-    if not disto_transform.is_calibrated :
+        disto_transform_model.calibrate(laser_las_pix , laser_sp_perp_free)
 
-        disto_transform.calibrate(laser_las_pix , laser_sp_perp_free)
-
-        laser_sp_persp_n_disto_free = [disto_transform.remove_disto(l) for l in laser_sp_perp_free]
+        laser_sp_persp_n_disto_free = [disto_transform_model.remove_disto(l) for l in laser_sp_perp_free]
         
         if (plot_on):
-            fig3 = plot.figure()
             x = [c[0] for c in laser_sp_persp_n_disto_free]
             y = [c[1] for c in laser_sp_persp_n_disto_free]
-            plot.plot(x,y, '.')
+            plot.plot(x,y, 'o')
+            rx = [c[0] for c in laser_las_pix]
+            ry = [c[1] for c in laser_las_pix]
+            plot.plot(x,y, '.', color="red")
             plot.title("laser spots with all removed removed")
 
+    # for checking :
+    global laser_pho_pix_from_reference
+    laser_pho_pix_from_reference = [wor_to_pho_perspective_model.transform_input_to_output( \
+                                      las_to_wor_perspective_model.transform_input_to_output( \
+                                           disto_transform_model.add_disto(r))) for r in laser_las_pix]
     if plot_on:
         plot.ion()
         plot.show()
         image_show()
+
+
 
 
 
@@ -411,16 +444,17 @@ def mouse_call(event, x, y, flags, param):
                         ref_pho_pix.pop(cntr_cnt)
                         break
                     cntr_cnt += 1
-
+            elif (flags == cv2.EVENT_FLAG_ALTKEY + cv2.EVENT_FLAG_LBUTTON) :
+                # add UNWANTED LASER OR REFERENCES
+                print("alt")
+                laser_pho_pix.append((x,y))
+                laser_map_and_sort
             else:
                 # ADD REFERENCE
                 if (len(ref_pho_pix) < 9):
                     ref_pho_pix.append((x,y))
                     sort_references()
                 else :
-                    print("laser spots adding DISABLED")
-                    # laser_centers.append((x,y))
-                    # laser_map_and_sort
                     print("too many reference marks already, first remove some ")
 
 
