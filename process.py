@@ -1,3 +1,4 @@
+import math
 import numpy as np
 print("numpy version  : " + np.version.version)
 import matplotlib.pyplot as plot
@@ -93,30 +94,42 @@ from dist_transformation import DistTransformation
 # laser_las_pix_coor_mid_pixel   = 400
 # no_laser_spots_per_line        = 8
 
-filename = "fotos_2/20210618_101335.JPG"
+# filename = "fotos_2/20210618_101335.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 100
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 8
+
+filename = "fotos_2/20210618_101359.JPG"
 laser_las_pix_coor_start       = 50
 laser_las_pix_coor_step        = 100
 laser_las_pix_coor_mid_pixel   = 400
 no_laser_spots_per_line        = 8
-
 
 # =====================
 # Create the references
 ref_wor_met = [[-1, 1], [0, 1], [1,1], # wereld coordinaten in meters.
                [-1, 0], [0, 0], [1,0], 
                [-1,-1], [0,-1],[1,-1]]
+
 laser_las_pix = []
-for y_i in range(0,no_laser_spots_per_line) :
-    for x_i in range(0,no_laser_spots_per_line) :
-        laser_las_pix.append([laser_las_pix_coor_start + x_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel, laser_las_pix_coor_start + y_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel])
+
+def initialize_laser_las_pix(start, step, mid, lines):
+    global laser_las_pix, laser_las_pix_coor_start, laser_las_pix_coor_step, laser_las_pix_coor_mid_pixel, no_laser_spots_per_line
+    laser_las_pix_coor_start         = start
+    laser_las_pix_coor_step          = step
+    laser_las_pix_coor_mid_pixel     = mid
+    no_laser_spots_per_line          = lines
+    laser_las_pix.clear()
+    for y_i in range(0,no_laser_spots_per_line) :
+        for x_i in range(0,no_laser_spots_per_line) :
+            laser_las_pix.append([laser_las_pix_coor_start + x_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel, laser_las_pix_coor_start + y_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel])
+
+initialize_laser_las_pix(laser_las_pix_coor_start, laser_las_pix_coor_step, laser_las_pix_coor_mid_pixel, no_laser_spots_per_line)
 
 # ================
 # create the other globals
 json_file_name = filename + ".json"
-img_org = cv2.imread(filename, cv2.IMREAD_COLOR)
-img_height = img_org.shape[0]
-img_width  = img_org.shape[1]
-crop          = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
 laser_pho_pix = []      # laser spots in photo pixels  : determined by openCV
 ref_pho_pix   = []      # reference in photo pixels    : determined by click on photo
 laser_pho_pix_from_reference = []      # laser spots in photo pixels  : determined by openCV
@@ -140,9 +153,10 @@ class NumpyArrayEncoder(JSONEncoder):
 
 # =====================================
 # load json file.
-def loadJson():
+def loadJson(json_file_name):
     global ref_pho_pix, laser_pho_pix
     if (os.path.isfile(json_file_name)):
+        print(f"Loading {json_file_name}")
         with open(json_file_name, 'r', encoding='utf-8') as json_file:
             json_data = json_file.read()
         json_data = json.loads(json_data)
@@ -152,7 +166,7 @@ def loadJson():
 
 # =====================================
 # save json file.
-def saveJson():
+def saveJson(json_file_name):
     with open(json_file_name, 'w', encoding='utf-8') as json_file:
         json_data = {}
         json_data["ref_pho_pix"] = ref_pho_pix
@@ -220,7 +234,7 @@ def image_process_laser_dots(image):
     dilated_image = cv2.dilate(binary_image, np.ones((15, 15)))
     # cv2.imshow("dilated_image", dilated_image)
     #  threshold the black/ non-black areas
-    _, thresh = cv2.threshold(dilated_image, BINARY_THRESHOLD, 255, cv2.THRESH_BINARY)
+    _, thresh = cv2.threshold(dilated_image, BINARY_THRESHOLD, 200, cv2.THRESH_BINARY)
     #  find connected components
     components = cv2.connectedComponentsWithStats(thresh, CONNECTIVITY, cv2.CV_32S)
     #  draw circles around center of components
@@ -274,7 +288,7 @@ def det_matrix_corners(M):
     corners[1][0] =  M[max_index_x_min_y]   # top right
     corners[0][1] =  M[min_index_x_min_y]   # bot left
     corners[1][1] =  M[max_index_x_plus_y]  # bot right
-    corners_i = np.zeros((2,2,1))
+    corners_i = np.zeros((2,2))
     corners_i[0][0] =  min_index_x_plus_y  # top left
     corners_i[1][0] =  max_index_x_min_y   # top right
     corners_i[0][1] =  min_index_x_min_y   # bot left
@@ -328,11 +342,22 @@ def laser_map_and_sort():
     # for each horizontal line, get the points, sort them and store them
     for line in range(0, no_laser_spots_per_line):
         laser_corners, laser_corners_i = det_matrix_corners(laser_pho_pix_work)
-        # create laser estimates line A, from the top corners
         A = laser_corners[0][0]
-        A[1] += min_dist/2 # offset the y point with 50 pixels
+        laser_pho_pix_corner_work = laser_pho_pix_work.copy()
+        
+        laser_pho_pix_corner_work.pop(laser_corners_i[0][0])
+        c, a_min_dist = closest_node(A, laser_pho_pix_corner_work)
+
+        laser_corners, laser_corners_i = det_matrix_corners(laser_pho_pix_work)
         B = laser_corners[1][0]
-        B[1] += min_dist/2 # offset the y point with 50 pixels
+        laser_pho_pix_corner_work = laser_pho_pix_work.copy()
+        laser_pho_pix_corner_work.pop(laser_corners_i[1][0])
+        c, b_min_dist = closest_node(B, laser_pho_pix_corner_work)
+
+
+        # create laser estimates line A, from the top corners
+        A[1] += a_min_dist/2 # offset the y point with 50 pixels
+        B[1] += b_min_dist/2 # offset the y point with 50 pixels
         laser_centers_above_line = []
         laser_centers_below_line = []
         # get all point above the line A-B, remove them from work list, and sort them.
@@ -354,6 +379,7 @@ def laser_map_and_sort():
 # ============================
 # model one by one all projections.
 def model_projections(plot_on=True):
+    global disto_transform_model
     no_expected_laser_spots = no_laser_spots_per_line * no_laser_spots_per_line
     if (no_expected_laser_spots != len(laser_pho_pix)):
         print("Warning : no expected laser spots not equal to no laser spots")
@@ -363,81 +389,87 @@ def model_projections(plot_on=True):
 
     # ..............
     # project reference to photo pixels : pespective removal possible
-    if not wor_to_pho_perspective_model.is_calibrated:
-        corners = [0, 2, 6, 8]
-        inputs = [ref_wor_met[i] for i in corners]
-        outputs = [ref_pho_pix[i] for i in corners]
-        wor_to_pho_perspective_model.calibrate(inputs, outputs)
-        # TODO : residuals of fit
-        # print ("2D perspex fit inverse" +  str(wereld[0]-w[0]) + " --> " + str(wereld[1]-w[1]))
+    corners = [0, 2, 6, 8]
+    inputs = [ref_wor_met[i] for i in corners]
+    outputs = [ref_pho_pix[i] for i in corners]
+    wor_to_pho_perspective_model.calibrate(inputs, outputs)
+    # TODO : residuals of fit
+    # print ("2D perspex fit inverse" +  str(wereld[0]-w[0]) + " --> " + str(wereld[1]-w[1]))
 
     laser_wor_met       = []      # laser sports in world meters : determined by reference fit         global laser_sp_perp_free
     laser_sp_perp_free  = []      # laser spot from photo to laser setpoints : remove photo and laser perspective
 
     # ..............
     # use corners of lasers to determine laser perspective
-    if not las_to_wor_perspective_model.is_calibrated:
-        # determine laser corners
-        laser_corners_pho_pix, laser_corners_pho_pix_i = det_matrix_corners(laser_pho_pix)
-        laser_corners_pho_pix_i = laser_corners_pho_pix_i.flatten()
-        # remove photo perspective from corners laser-photo-pixels
-        laser_corners_wor_met = [wor_to_pho_perspective_model.transform_output_to_input(laser_pho_pix[i]) for i in laser_corners_pho_pix_i]
-        laser_corners_las_pix = [laser_las_pix[i] for i in laser_corners_pho_pix_i]
-        # fit the laser perspective on the corners
-        las_to_wor_perspective_model.calibrate(laser_corners_las_pix, laser_corners_wor_met)
+    # determine laser corners
+    laser_corners_pho_pix, laser_corners_pho_pix_i = det_matrix_corners(laser_pho_pix)
+    laser_corners_pho_pix_i = laser_corners_pho_pix_i.flatten()
+    # remove photo perspective from corners laser-photo-pixels
+    laser_corners_wor_met = [wor_to_pho_perspective_model.transform_output_to_input(laser_pho_pix[i]) for i in laser_corners_pho_pix_i]
+    laser_corners_las_pix = [laser_las_pix[i] for i in laser_corners_pho_pix_i]
+    # fit the laser perspective on the corners
+    las_to_wor_perspective_model.calibrate(laser_corners_las_pix, laser_corners_wor_met)
 
-        # remove photo and laser perspective 
-        for lpp in laser_pho_pix:
-            # remove photo perspective (for plot only)
-            lwm = wor_to_pho_perspective_model.transform_output_to_input(lpp)
-            laser_wor_met.append(lwm)
+    # remove photo and laser perspective 
+    for lpp in laser_pho_pix:
+        # remove photo perspective (for plot only)
+        lwm = wor_to_pho_perspective_model.transform_output_to_input(lpp)
+        laser_wor_met.append(lwm)
 
-            # remove laser perspective also
-            lsp_d = las_to_wor_perspective_model.transform_output_to_input(lwm)
-            laser_sp_perp_free.append(lsp_d)
+        # remove laser perspective also
+        lsp_d = las_to_wor_perspective_model.transform_output_to_input(lwm)
+        laser_sp_perp_free.append(lsp_d)
 
-        # plot the laser spots with both perspectives removed.
-        if (plot_on):
-            fig1 = plot.figure()
-            x = [c[0] for c in laser_wor_met]
-            y = [c[1] for c in laser_wor_met]
-            plot.plot(x,y,'.')
-            plot.title("laser spots with photo perspective removed")
+    # plot the laser spots with both perspectives removed.
+    if (plot_on):
+        fig1 = plot.figure()
+        x = [c[0] for c in laser_wor_met]
+        y = [c[1] for c in laser_wor_met]
+        plot.plot(x,y,'.')
+        plot.title("laser spots with photo perspective removed")
 
-            fig2 = plot.figure()
-            x = [c[0] for c in laser_sp_perp_free]
-            y = [c[1] for c in laser_sp_perp_free]
-            plot.plot(x,y,'x')
-            plot.title("laser spots with both photo and laser perspective removed")
+        fig2 = plot.figure()
+        x = [c[0] for c in laser_sp_perp_free]
+        y = [c[1] for c in laser_sp_perp_free]
+        plot.plot(x,y,'x', label="laser perspective removed")
+        plot.title("laser spots with both photo and laser perspective removed")
 
 
     # calibrate the distortion of the laser
     laser_sp_persp_n_disto_free  = []      # laser spot photo to setpoints : removed photo persp, laser persp, laser disto.
-    if not disto_transform_model.is_calibrated :
 
-        disto_transform_model.calibrate(laser_las_pix , laser_sp_perp_free)
+    disto_transform_model.calibrate(laser_las_pix , laser_sp_perp_free)
 
-        laser_sp_persp_n_disto_free = [disto_transform_model.remove_disto(l) for l in laser_sp_perp_free]
-        
-        if (plot_on):
-            x = [c[0] for c in laser_sp_persp_n_disto_free]
-            y = [c[1] for c in laser_sp_persp_n_disto_free]
-            plot.plot(x,y, 'o')
-            rx = [c[0] for c in laser_las_pix]
-            ry = [c[1] for c in laser_las_pix]
-            plot.plot(x,y, '.', color="red")
-            plot.title("laser spots with all removed removed")
+    laser_sp_persp_n_disto_free = [disto_transform_model.remove_disto(l) for l in laser_sp_perp_free]
+    
+    if (plot_on):
+        x = [c[0] for c in laser_sp_persp_n_disto_free]
+        y = [c[1] for c in laser_sp_persp_n_disto_free]
+        plot.plot(x,y, 'o', label="disto also removed")
+        rx = [c[0] for c in laser_las_pix]
+        ry = [c[1] for c in laser_las_pix]
+        plot.plot(rx,ry, '.', color="red", label="laser setpoints")
+        plot.title("laser spots with all removed removed")
+        plot.legend()
 
     # for checking :
     global laser_pho_pix_from_reference
     laser_pho_pix_from_reference = [wor_to_pho_perspective_model.transform_input_to_output( \
                                       las_to_wor_perspective_model.transform_input_to_output( \
                                            disto_transform_model.add_disto(r))) for r in laser_las_pix]
+
+
+    distance = lambda a, b: math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+    distances = [distance(a,b) for a, b in zip(laser_pho_pix, laser_pho_pix_from_reference)]
+    max_distance = max(distances)
+    print(f"{max_distance=}")
+
     if plot_on:
         plot.ion()
         plot.show()
         image_show()
 
+    return max_distance
 
 
 
@@ -494,7 +526,7 @@ def mouse_call(event, x, y, flags, param):
                 # add UNWANTED LASER OR REFERENCES
                 print("alt")
                 laser_pho_pix.append((x,y))
-                laser_map_and_sort
+                laser_map_and_sort()
             else:
                 # ADD REFERENCE
                 if (len(ref_pho_pix) < 9):
@@ -533,50 +565,57 @@ def mouse_call(event, x, y, flags, param):
 
 
 
-# ///////////
-# main script
-# ///////////
-loadJson()
-image_show()
-cv2.setMouseCallback(filename, mouse_call)
+if __name__ == "__main__":
+    img_org = cv2.imread(filename, cv2.IMREAD_COLOR)
+    img_height = img_org.shape[0]
+    img_width  = img_org.shape[1]
+    crop          = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
 
-print("press q to QUIT")
-print("      r to RESET VIEW")
-print("      l to LASER spot image process")
-print("      c to clear Laser MODEL")
-print("      m to perspective fit the reference photo-world correction model")
-print("      RMB to DRAG VIEW")
-print("      LMB to SET MARKER and/or laser spot")
-print("      CNTRL-LMB to REMOVE LASER and/or REFERENCE POINT (only @scale 1")
+    # ///////////
+    # main script
+    # ///////////
+    loadJson(json_file_name)
+    image_show()
+    cv2.setMouseCallback(filename, mouse_call)
 
-run = True
-while(run) :
-    plot.pause(0.01)
+    print("press q to QUIT")
+    print("      r to RESET VIEW")
+    print("      l to LASER spot image process")
+    print("      c to clear Laser MODEL")
+    print("      S to clear Laser map and sort")
+    print("      m to perspective fit the reference photo-world correction model")
+    print("      RMB to DRAG VIEW")
+    print("      LMB to SET MARKER and/or laser spot")
+    print("      CNTRL-LMB to REMOVE LASER and/or REFERENCE POINT (only @scale 1")
 
-    key = cv2.waitKey(30)
-    if (key == ord("q")) : 
-        run = False
-    elif (key == ord("r")):
-        crop          = [[0, img_width], [0, img_height]]   # img[y:y+h, x:x+w]
-        scale = 0.25
-        image_show()
-    elif (key == ord("l")):
-        print( "MODELING LASERS")
-        image_process_laser_dots(img_org)
-        image_show()
-    elif (key == ord("c")):
-        print( "CLEAR LASERS")
-        laser_center_pix = []
-        image_show()
-    elif (key == ord("s")):
-        laser_map_and_sort()
-        image_show()
-    elif (key == ord("m")):
-        model_projections()
+    run = True
+    while(run) :
+        plot.pause(0.01)
 
-        image_show()
+        key = cv2.waitKey(30)
+        if (key == ord("q")) : 
+            run = False
+        elif (key == ord("r")):
+            crop          = [[0, img_width], [0, img_height]]   # img[y:y+h, x:x+w]
+            scale = 0.25
+            image_show()
+        elif (key == ord("l")):
+            print( "MODELING LASERS")
+            image_process_laser_dots(img_org)
+            image_show()
+        elif (key == ord("c")):
+            print( "CLEAR LASERS")
+            laser_center_pix = []
+            image_show()
+        elif (key == ord("s")):
+            laser_map_and_sort()
+            image_show()
+        elif (key == ord("m")):
+            model_projections()
 
-        
-saveJson()
-cv2.destroyAllWindows()
+            image_show()
+
+            
+    saveJson(json_file_name)
+    cv2.destroyAllWindows()
 

@@ -15,10 +15,10 @@ class DistTransformation:
         self.params     = []
         self.s = math.pi / (8*400) # guestimate , rad/pixel
         self.t = math.pi / (8*400) # guestimate , rad/pixel
-        self.d = 2    # guestimate , pixel 
-        self.e = 0.02 # guestimate , pixel
-        self.b = 1
-        self.a = 0
+        self.d = 546  # guestimate , pixel 
+        self.e = 51   # guestimate , pixel
+        self.b = 652
+        self.a = 0.0041
         self.c = 0
 
         self.__calibrated = False
@@ -29,7 +29,7 @@ class DistTransformation:
 
     def calibrate(self, laser_setpoints, distorted_laser_setpoints):
         if (len(laser_setpoints) != len(distorted_laser_setpoints)):
-            raise Exception("Need exactly equal pairs to calibrate")
+            raise Exception(f"Need exactly equal pairs to calibrate {len(laser_setpoints)} != {len(distorted_laser_setpoints)}")
         self._calibrate(laser_setpoints, distorted_laser_setpoints)
         self.__calibrated = True
 
