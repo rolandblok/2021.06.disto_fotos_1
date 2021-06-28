@@ -28,7 +28,8 @@ try:
         max_distances = model_projections(False)
         result = result.append({'file':file, 'a':disto_transform_model.a, 'b':disto_transform_model.b, 'c':disto_transform_model.c,
                     'd':disto_transform_model.d, 'e':disto_transform_model.e, 's':disto_transform_model.s, 
-                    't':disto_transform_model.t, 'laser':laser, 'camera':camera, "max_residual[px]":max_distances}, ignore_index=True)
+                    't':disto_transform_model.t, 'x0':disto_transform_model.x0, "y0":disto_transform_model.y0,
+                    'laser':laser, 'camera':camera, "max_residual[px]":max_distances}, ignore_index=True)
 except Exception as e:
     track = format_exc()
     print(track)

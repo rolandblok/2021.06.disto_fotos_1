@@ -82,11 +82,11 @@ from dist_transformation import DistTransformation
 # laser_las_pix_coor_mid_pixel     = 400
 # no_laser_spots_per_line          = 8
 
-# filename = "fotos_2/20210618_101220.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 100
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 8
+filename = "fotos_2/20210618_101220.JPG"
+laser_las_pix_coor_start       = 50
+laser_las_pix_coor_step        = 100
+laser_las_pix_coor_mid_pixel   = 400
+no_laser_spots_per_line        = 8
 
 # filename = "fotos_2/20210618_101230.JPG"
 # laser_las_pix_coor_start       = 50
@@ -100,11 +100,11 @@ from dist_transformation import DistTransformation
 # laser_las_pix_coor_mid_pixel   = 400
 # no_laser_spots_per_line        = 8
 
-filename = "fotos_2/20210618_101359.JPG"
-laser_las_pix_coor_start       = 50
-laser_las_pix_coor_step        = 100
-laser_las_pix_coor_mid_pixel   = 400
-no_laser_spots_per_line        = 8
+# filename = "fotos_2/20210618_101359.JPG"
+# laser_las_pix_coor_start       = 50
+# laser_las_pix_coor_step        = 100
+# laser_las_pix_coor_mid_pixel   = 400
+# no_laser_spots_per_line        = 8
 
 # =====================
 # Create the references
