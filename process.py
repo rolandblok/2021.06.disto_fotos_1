@@ -26,123 +26,86 @@ from dist_transformation import DistTransformation
 #
 #  4th : fit laser pixel grid towards world coordinates.
 
+class LaserFoto:
+    LASER_A= "laser model basic"
+    LASER_B= "laser model sticker"
+    
+    PROJECT_STRAIT="straight"
+    PROJECT_ANGLE="angle"
+
+    def __init__(self, file_name, start, step, mid, lines, laser_model, laser_axis, photo_axis) : 
+        self.filename = file_name
+        self.json_file_name = file_name + ".json"
+        self.start = start
+        self.step = step
+        self.mid = mid
+        self.no_laser_spots_per_line = lines
+        self.laser_model = laser_model
+        self.laser_axis = laser_axis
+        self.photo_axis = photo_axis
+    def __str__(self):
+        return f"file: {self.filename} laser_model: {self.laser_model}"
 
 
-# filename = "fotos_2/20210618_095352.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
+laser_photos = []                                                                           # laser projection        photo projection
+laser_photos.append(LaserFoto("fotos_2/20210618_095352.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+laser_photos.append(LaserFoto("fotos_2/20210618_095410.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
-# filename = "fotos_2/20210618_095410.JPG"
-# laser_las_pix_coor_start         = 50
-# laser_las_pix_coor_step          = 50
-# laser_las_pix_coor_mid_pixel     = 400
-# no_laser_spots_per_line          = 15
+laser_photos.append(LaserFoto("fotos_2/20210618_095516.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2/20210618_095534.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2/20210618_095609.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2/20210618_095618.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-# filename = "fotos_2/20210618_095516.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
+laser_photos.append(LaserFoto("fotos_2/20210618_100631.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2/20210618_100642.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-# filename = "fotos_2/20210618_095534.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
+laser_photos.append(LaserFoto("fotos_2/20210618_101129.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2/20210618_101220.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2/20210618_101230.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-# filename = "fotos_2/20210618_095609.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
+laser_photos.append(LaserFoto("fotos_2/20210618_101335.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+laser_photos.append(LaserFoto("fotos_2/20210618_101359.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
-# filename = "fotos_2/20210618_095618.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
+laser_photos.append(LaserFoto("fotos_2/20210618_101612.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+laser_photos.append(LaserFoto("fotos_2/20210618_101622.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
-# filename = "fotos_2/20210618_100631.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
+laser_photos.append(LaserFoto("fotos_2/20210618_102537.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+laser_photos.append(LaserFoto("fotos_2/20210618_102559.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
-# filename = "fotos_2/20210618_100642.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 50
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 15
+# not usable, no complete view of spots :-(
+# laser_photos.append(LaserFoto("fotos_2/20210618_102725.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_102736.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-# filename = "fotos_2/20210618_101129.JPG"
-# laser_las_pix_coor_start         = 50
-# laser_las_pix_coor_step          = 100
-# laser_las_pix_coor_mid_pixel     = 400
-# no_laser_spots_per_line          = 8
-
-filename = "fotos_2/20210618_101220.JPG"
-laser_las_pix_coor_start       = 50
-laser_las_pix_coor_step        = 100
-laser_las_pix_coor_mid_pixel   = 400
-no_laser_spots_per_line        = 8
-
-# filename = "fotos_2/20210618_101230.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 100
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 8
-
-# filename = "fotos_2/20210618_101335.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 100
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 8
-
-# filename = "fotos_2/20210618_101359.JPG"
-# laser_las_pix_coor_start       = 50
-# laser_las_pix_coor_step        = 100
-# laser_las_pix_coor_mid_pixel   = 400
-# no_laser_spots_per_line        = 8
+active_laser_photo = 0
 
 # =====================
 # Create the references
 ref_wor_met = [[-1, 1], [0, 1], [1,1], # wereld coordinaten in meters.
                [-1, 0], [0, 0], [1,0], 
                [-1,-1], [0,-1],[1,-1]]
-
 laser_las_pix = []
-
-def initialize_laser_las_pix(start, step, mid, lines):
-    global laser_las_pix, laser_las_pix_coor_start, laser_las_pix_coor_step, laser_las_pix_coor_mid_pixel, no_laser_spots_per_line
-    laser_las_pix_coor_start         = start
-    laser_las_pix_coor_step          = step
-    laser_las_pix_coor_mid_pixel     = mid
-    no_laser_spots_per_line          = lines
+def initialize_laser_las_pix(laser_photo):
+    global laser_las_pix
+    loadJson(laser_photo.json_file_name)
     laser_las_pix.clear()
-    for y_i in range(0,no_laser_spots_per_line) :
-        for x_i in range(0,no_laser_spots_per_line) :
-            laser_las_pix.append([laser_las_pix_coor_start + x_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel, laser_las_pix_coor_start + y_i*laser_las_pix_coor_step - laser_las_pix_coor_mid_pixel])
-
-initialize_laser_las_pix(laser_las_pix_coor_start, laser_las_pix_coor_step, laser_las_pix_coor_mid_pixel, no_laser_spots_per_line)
-
+    for y_i in range(0,laser_photo.no_laser_spots_per_line) :
+        for x_i in range(0,laser_photo.no_laser_spots_per_line) :
+            laser_las_pix.append([laser_photo.start + x_i*laser_photo.step - laser_photo.mid, laser_photo.start + y_i*laser_photo.step - laser_photo.mid])
+    
 # ================
 # create the other globals
-json_file_name = filename + ".json"
-laser_pho_pix = []      # laser spots in photo pixels  : determined by openCV
-ref_pho_pix   = []      # reference in photo pixels    : determined by click on photo
-laser_pho_pix_from_reference = []      # laser spots in photo pixels  : determined by openCV
+laser_pho_pix = []      # laser spots in photo pixels  : determined by openCV and store in JSON
+ref_pho_pix   = []      # reference in photo pixels    : determined by click on photo and store in JSON
+laser_pho_pix_from_reference = []      # check the references through the fitted model : used for photo plot
 
 wor_to_pho_perspective_model = TwoDToTwoDPerspectiveTransformation()
 las_to_wor_perspective_model = TwoDToTwoDPerspectiveTransformation()
 disto_transform_model        = DistTransformation()
 
-
-scale = 0.25
 DRAW_CIRCLE_RADIUS = 14
 DRAW_REF_RADIUS    = 14
-
+scale = 0.25
+window_name = "laser photo"
 # =====================
 # json serialize helper
 class NumpyArrayEncoder(JSONEncoder):
@@ -162,6 +125,9 @@ def loadJson(json_file_name):
         json_data = json.loads(json_data)
         ref_pho_pix = json_data["ref_pho_pix"]
         laser_pho_pix = json_data["laser_pho_pix"]
+    else:
+        ref_pho_pix = []
+        laser_pho_pix = []
 
 
 # =====================================
@@ -185,7 +151,12 @@ def saveJson(json_file_name):
 # =====================================
 # display the image.
 def image_show():
+
     img = img_org.copy()
+    
+    cv2.putText(img, laser_photos[active_laser_photo].filename, (10, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX, 3 , color=(0,0,55), thickness = 2)
+
     counter = 0
     for center in laser_pho_pix:
         cv2.circle(img, (int(center[0]), int(center[1])), int(DRAW_CIRCLE_RADIUS), color=(0, 0, 255), thickness=2) # (B, G, R)
@@ -217,7 +188,7 @@ def image_show():
     img = img[crop[1][0]:crop[1][1], crop[0][0]:crop[0][1]] #https://stackoverflow.com/questions/15589517/how-to-crop-an-image-in-opencv-using-python#15589825
     img = cv2.resize(img, (0, 0), fx=scale, fy=scale)
 
-    cv2.imshow(filename, img)
+    cv2.imshow(window_name, img)
 
 # =======================
 # IMAGE PROCESS THE LASERS
@@ -246,7 +217,7 @@ def image_process_laser_dots(image):
         # transform to serializable data
         laser_pho_pix.append((int(component[0]), int(component[1])))
 
-    laser_map_and_sort()
+    laser_map_and_sort(laser_photos[active_laser_photo])
     image_show()
 
 # =============
@@ -312,13 +283,13 @@ def isabove(p, a,b):
 
 # =============
 # map the lasers to the set setoints, and sort them
-def laser_map_and_sort():
+def laser_map_and_sort(laser_photo):
     global laser_pho_pix
 
     if(len(ref_pho_pix) != 9) :
         print("cannot sort reference, only when 9")
         return
-    no_expected_laser_spots = no_laser_spots_per_line * no_laser_spots_per_line
+    no_expected_laser_spots = laser_photo.no_laser_spots_per_line * laser_photo.no_laser_spots_per_line
     if (no_expected_laser_spots != len(laser_pho_pix)):
         print("Warning : no expected laser spots not equal to no laser spots")
         print(" expected " + str(no_expected_laser_spots))
@@ -340,7 +311,7 @@ def laser_map_and_sort():
     laser_pho_pix_work = laser_pho_pix.copy()
 
     # for each horizontal line, get the points, sort them and store them
-    for line in range(0, no_laser_spots_per_line):
+    for line in range(0, laser_photo.no_laser_spots_per_line):
         laser_corners, laser_corners_i = det_matrix_corners(laser_pho_pix_work)
         A = laser_corners[0][0]
         laser_pho_pix_corner_work = laser_pho_pix_work.copy()
@@ -378,9 +349,9 @@ def laser_map_and_sort():
 
 # ============================
 # model one by one all projections.
-def model_projections(plot_on=True):
+def model_projections(laser_photo, plot_on=True):
     global disto_transform_model
-    no_expected_laser_spots = no_laser_spots_per_line * no_laser_spots_per_line
+    no_expected_laser_spots = laser_photo.no_laser_spots_per_line * laser_photo.no_laser_spots_per_line
     if (no_expected_laser_spots != len(laser_pho_pix)):
         print("Warning : no expected laser spots not equal to no laser spots")
         print(" expected " + str(no_expected_laser_spots))
@@ -509,7 +480,7 @@ def mouse_call(event, x, y, flags, param):
                         (abs(y - int(center[1])) < DRAW_CIRCLE_RADIUS)):
                         print ("HIT laser " + str(cntr_cnt))
                         laser_pho_pix.pop(cntr_cnt)
-                        laser_map_and_sort()
+                        laser_map_and_sort(laser_photos[active_laser_photo])
                         break
                     cntr_cnt += 1
 
@@ -526,7 +497,7 @@ def mouse_call(event, x, y, flags, param):
                 # add UNWANTED LASER OR REFERENCES
                 print("alt")
                 laser_pho_pix.append((x,y))
-                laser_map_and_sort()
+                laser_map_and_sort(laser_photos[active_laser_photo])
             else:
                 # ADD REFERENCE
                 if (len(ref_pho_pix) < 9):
@@ -563,20 +534,29 @@ def mouse_call(event, x, y, flags, param):
     image_show()
 
 
-
-
-if __name__ == "__main__":
-    img_org = cv2.imread(filename, cv2.IMREAD_COLOR)
+img_width  = 0
+img_height = 0
+img_org    = 0
+def load_image(laser_photo):
+    global img_height, img_width, crop, img_org
+    img_org = cv2.imread(laser_photo.filename, cv2.IMREAD_COLOR)
     img_height = img_org.shape[0]
     img_width  = img_org.shape[1]
-    crop          = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
-
-    # ///////////
-    # main script
-    # ///////////
-    loadJson(json_file_name)
+    crop       = [[0, img_width], [0, img_height]]   # [[x1,x2], [y1,y2]]
     image_show()
-    cv2.setMouseCallback(filename, mouse_call)
+
+
+
+# ///////////
+# main script
+# ///////////
+
+if __name__ == "__main__":
+
+
+    initialize_laser_las_pix(laser_photos[active_laser_photo])
+    load_image(laser_photos[active_laser_photo])
+    cv2.setMouseCallback(window_name, mouse_call)
 
     print("press q to QUIT")
     print("      r to RESET VIEW")
@@ -592,7 +572,8 @@ if __name__ == "__main__":
     while(run) :
         plot.pause(0.01)
 
-        key = cv2.waitKey(30)
+        key = cv2.waitKeyEx(30)
+        # if key != -1 : print(".." + str(key) + "..")
         if (key == ord("q")) : 
             run = False
         elif (key == ord("r")):
@@ -605,17 +586,34 @@ if __name__ == "__main__":
             image_show()
         elif (key == ord("c")):
             print( "CLEAR LASERS")
-            laser_center_pix = []
+            laser_pho_pix = []
             image_show()
         elif (key == ord("s")):
-            laser_map_and_sort()
+            laser_map_and_sort(laser_photos[active_laser_photo])
             image_show()
         elif (key == ord("m")):
-            model_projections()
+            model_projections(laser_photos[active_laser_photo])
 
             image_show()
+        elif (key == 2424832): # left arrow
+            if active_laser_photo == 0 :
+                active_laser_photo = len(laser_photos) - 1
+            else : 
+                active_laser_photo -= 1
+            initialize_laser_las_pix(laser_photos[active_laser_photo])
+            load_image(laser_photos[active_laser_photo])
 
+        elif (key == 2555904): # right arrow
+            if active_laser_photo == len(laser_photos) - 1 :
+                active_laser_photo = 0
+            else : 
+                active_laser_photo += 1
+            initialize_laser_las_pix(laser_photos[active_laser_photo])
+            load_image(laser_photos[active_laser_photo])
+
+
+                
             
-    saveJson(json_file_name)
+    saveJson(laser_photos[active_laser_photo].json_file_name)
     cv2.destroyAllWindows()
 
