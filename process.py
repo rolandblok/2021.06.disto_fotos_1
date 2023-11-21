@@ -29,6 +29,7 @@ from dist_transformation import DistTransformation
 class LaserFoto:
     LASER_A= "laser model basic"
     LASER_B= "laser model sticker"
+    LASER_C= "laser model 2023"
     
     PROJECT_STRAIT="straight"
     PROJECT_ANGLE="angle"
@@ -48,29 +49,34 @@ class LaserFoto:
 
 
 laser_photos = []                                                                           # laser projection        photo projection
-laser_photos.append(LaserFoto("fotos_2/20210618_095352.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
-laser_photos.append(LaserFoto("fotos_2/20210618_095410.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+laser_photos.append(LaserFoto("fotos_2023nov/IMG20231121170546b.jpg", 50, 50, 400, 15, LaserFoto.LASER_C, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2023nov/whatsapp.jpg", 50, 50, 400, 15, LaserFoto.LASER_C, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
-laser_photos.append(LaserFoto("fotos_2/20210618_095516.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
-laser_photos.append(LaserFoto("fotos_2/20210618_095534.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
-laser_photos.append(LaserFoto("fotos_2/20210618_095609.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
-laser_photos.append(LaserFoto("fotos_2/20210618_095618.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-laser_photos.append(LaserFoto("fotos_2/20210618_100631.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
-laser_photos.append(LaserFoto("fotos_2/20210618_100642.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-laser_photos.append(LaserFoto("fotos_2/20210618_101129.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
-laser_photos.append(LaserFoto("fotos_2/20210618_101220.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
-laser_photos.append(LaserFoto("fotos_2/20210618_101230.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_095352.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_095410.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
-laser_photos.append(LaserFoto("fotos_2/20210618_101335.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
-laser_photos.append(LaserFoto("fotos_2/20210618_101359.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_095516.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_095534.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_095609.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_095618.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-laser_photos.append(LaserFoto("fotos_2/20210618_101612.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
-laser_photos.append(LaserFoto("fotos_2/20210618_101622.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_100631.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_100642.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
 
-laser_photos.append(LaserFoto("fotos_2/20210618_102537.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
-laser_photos.append(LaserFoto("fotos_2/20210618_102559.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_101129.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_101220.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_101230.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
+
+# laser_photos.append(LaserFoto("fotos_2/20210618_101335.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_101359.JPG", 50,100, 400,  8, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+
+# laser_photos.append(LaserFoto("fotos_2/20210618_101612.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_101622.JPG", 50, 50, 400, 15, LaserFoto.LASER_B, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+
+# laser_photos.append(LaserFoto("fotos_2/20210618_102537.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# laser_photos.append(LaserFoto("fotos_2/20210618_102559.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
 # not usable, no complete view of spots :-(
 # laser_photos.append(LaserFoto("fotos_2/20210618_102725.JPG", 50,100, 400,  8, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
@@ -192,17 +198,23 @@ def image_show():
 
 # =======================
 # IMAGE PROCESS THE LASERS
+test_image = 0
 def image_process_laser_dots(image):
+    global img_org
     # https://stackoverflow.com/questions/51846933/finding-bright-spots-in-a-image-using-opencv#51848512
         #  constants
     BINARY_THRESHOLD = 80
     CONNECTIVITY = 10
     #  convert to gray
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    ret, gray_image = cv2.threshold(gray_image,222,255,cv2.THRESH_BINARY)
+
     #  extract edges
     binary_image = cv2.Laplacian(gray_image, cv2.CV_8UC1)
+
     #  fill in the holes between edges with dilation
     dilated_image = cv2.dilate(binary_image, np.ones((15, 15)))
+    # img_org  = binary_image
     # cv2.imshow("dilated_image", dilated_image)
     #  threshold the black/ non-black areas
     _, thresh = cv2.threshold(dilated_image, BINARY_THRESHOLD, 200, cv2.THRESH_BINARY)
