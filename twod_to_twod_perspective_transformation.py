@@ -53,4 +53,7 @@ class TwoDToTwoDPerspectiveTransformation:
         all_outs = numpy.linalg.lstsq(m, v, rcond=None)
         x = all_outs[0]
         return m * x.T
+    
+    def __str__(self):
+        return f"{self.__matrix}"
 

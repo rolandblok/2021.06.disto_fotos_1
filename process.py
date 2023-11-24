@@ -30,6 +30,12 @@ class LaserFoto:
     LASER_A= "laser model basic"
     LASER_B= "laser model sticker"
     LASER_C= "laser model 2023"
+    laser_1="2W, saturn scanner"
+    laser_2="2W_1"
+    laser_3="2W_2"
+    laser_4="10W, 3m->2m wide"
+    laser_5="selfbuild"
+
     
     PROJECT_STRAIT="straight"
     PROJECT_ANGLE="angle"
@@ -48,13 +54,21 @@ class LaserFoto:
         return f"file: {self.filename} laser_model: {self.laser_model}"
 
 
+
 laser_photos = []                                                                           # laser projection        photo projection
-laser_photos.append(LaserFoto("fotos_2023nov/IMG20231121170546b.jpg", 50, 50, 400, 15, LaserFoto.LASER_C, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+# 2023nov photo 1 tm 5 are made with x start at 400, step 50, but upto excluding 400 
+# I asume step -400 is also missing, outside the possibilities of laser.
+laser_photos.append(LaserFoto("fotos_2023nov/1.jpg", 50, 50, 400, 15, LaserFoto.laser_1, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2023nov/2.jpg", 50, 50, 400, 15, LaserFoto.laser_2, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2023nov/3.jpg", 50, 50, 400, 15, LaserFoto.laser_3, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2023nov/4.jpg", 50, 50, 400, 15, LaserFoto.laser_4, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_STRAIT ))
+laser_photos.append(LaserFoto("fotos_2023nov/5.jpg", 50, 50, 400, 15, LaserFoto.laser_5, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_STRAIT ))
+# laser_photos.append(LaserFoto("fotos_2023nov/IMG20231121170546b.jpg", 50, 50, 400, 15, LaserFoto.LASER_C, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 # laser_photos.append(LaserFoto("fotos_2023nov/whatsapp.jpg", 50, 50, 400, 15, LaserFoto.LASER_C, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
 
 
-# laser_photos.append(LaserFoto("fotos_2/20210618_095352.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
+laser_photos.append(LaserFoto("fotos_2/20210618_095352.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 # laser_photos.append(LaserFoto("fotos_2/20210618_095410.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_STRAIT, LaserFoto.PROJECT_ANGLE ))
 
 # laser_photos.append(LaserFoto("fotos_2/20210618_095516.JPG", 50, 50, 400, 15, LaserFoto.LASER_A, LaserFoto.PROJECT_ANGLE, LaserFoto.PROJECT_STRAIT ))
@@ -186,7 +200,7 @@ def image_show():
 
     counter = 0
     for center in laser_pho_pix_from_reference:
-        cv2.circle(img, (int(center[0]), int(center[1])), int(DRAW_CIRCLE_RADIUS+4), color=(255, 0, 255), thickness=2) # (B, G, R)
+        cv2.circle(img, (int(center[0]), int(center[1])), int(DRAW_CIRCLE_RADIUS+4), color=(255, 0, 0), thickness=2) # (B, G, R)
         counter += 1
     
 
@@ -376,6 +390,8 @@ def model_projections(laser_photo, plot_on=True):
     inputs = [ref_wor_met[i] for i in corners]
     outputs = [ref_pho_pix[i] for i in corners]
     wor_to_pho_perspective_model.calibrate(inputs, outputs)
+    print("fit world to photo perspective parameters : ")
+    print("  " + str(wor_to_pho_perspective_model))
     # TODO : residuals of fit
     # print ("2D perspex fit inverse" +  str(wereld[0]-w[0]) + " --> " + str(wereld[1]-w[1]))
 
@@ -444,6 +460,8 @@ def model_projections(laser_photo, plot_on=True):
 
     distance = lambda a, b: math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
     distances = [distance(a,b) for a, b in zip(laser_pho_pix, laser_pho_pix_from_reference)]
+    print(f" file {laser_photo.filename} : a:{disto_transform_model.a} b:{disto_transform_model.b} c:{disto_transform_model.c} d:{disto_transform_model.d} e:{disto_transform_model.e} s:{disto_transform_model.s} t:{disto_transform_model.t} x0:{disto_transform_model.x0} y0:{disto_transform_model.y0}")
+        
     max_distance = max(distances)
     print(f"{max_distance=}")
 
@@ -576,6 +594,7 @@ if __name__ == "__main__":
     print("      c to clear Laser MODEL")
     print("      S to clear Laser map and sort")
     print("      m to perspective fit the reference photo-world correction model")
+    print("      S to SAVE JSON")
     print("      RMB to DRAG VIEW")
     print("      LMB to SET MARKER and/or laser spot")
     print("      CNTRL-LMB to REMOVE LASER and/or REFERENCE POINT (only @scale 1")
@@ -605,6 +624,9 @@ if __name__ == "__main__":
             image_show()
         elif (key == ord("m")):
             model_projections(laser_photos[active_laser_photo])
+
+        elif (key == ord("S")):
+            saveJson(laser_photos[active_laser_photo].json_file_name)
 
             image_show()
         elif (key == 2424832): # left arrow
